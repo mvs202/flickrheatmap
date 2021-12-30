@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Flickr Heatmap</title>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<base target="_blank">
+<!-- Copyright © 2018-2020 Michael Schade, http://mvjantzen.com -->
+<style>
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: verdana, sans-serif;
+  overflow: hidden;
+  }
+img {
+  margin: 1px;
+  }
+input {
+  width: 200px;
+  }
+#map {
+  height: 100%;
+  }
+#pix {
+  color: #000000;
+  background-color: #8EDA38;
+  position: absolute;
+  padding: 4px;
+  padding-right: 20px;
+  top: 0;
+  left: 0;
+  max-height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  }
+#controls {
+  font-size: 13px;
+  color: #000000;
+  background-color: #8EDA38;
+  position: absolute;
+  padding: 4px;
+  top: 0;
+  right: 0;
+  transition: background-color 1s ease;
+  }
+</style>
+<script>
+var MAX_THUMBNAIL_COUNT = 250;
+var MAX_DATE_VALUE = 1000;
+var map;
+var photos = [];
+var heatmap;
+var points = [];  // used only for the heatmap
+var displayedPoints;
+var minDatasetDate = null;
+var maxDatasetDate = null;
+var minDisplayDate = null;
+var maxDisplayDate = null;
+var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+var previousActiveState = false;
+
+function parameter(name) {
+  queryStr = window.location.href.substring(window.location.href.indexOf('?') + 1).split("&");
+  for (var i = 0; i < queryStr.length; i++) {
+    eqPos = queryStr[i].indexOf('=');
+    if (eqPos >= 0) {
+      if (queryStr[i].substring(0, eqPos) == name)
+        return queryStr[i].substring(eqPos + 1);
+      }
+    else if (queryStr[i] == name)
+      return "";
+    }
+  return null;
+  }
+
+function setHeatmapData() {
+  if (minDatasetDate == minDisplayDate && maxDatasetDate == maxDisplayDate) {
+    displayedPoints = points.slice(0);
+    }
+  else {
+    displayedPoints = [];
+    for (var i = 0; i < photos.length; i++) {
+      if (photos[i].datetaken >= minDisplayDate && photos[i].datetaken <= maxDisplayDate) {
+        displayedPoints.push(photos[i].point);
+        }
+      }
+    }
+  heatmap.setData(displayedPoints);
+  countPhotos();
+  }
+
+function initialize() {
+  var csv = parameter("csv");
+  if (!csv) {
+    alert("Missing 'csv' parameter");
+    return;
+  }
+  var styles = [
+    {elementType: 'geometry', stylers: [{color: '#505050'}]},
+    {elementType: 'labels.text.fill', stylers: [{color: '#FFFFFF'}]},
+    {elementType: 'labels.text.stroke', stylers: [{color: '#303030'}]},
+    {featureType: 'administrative', elementType: 'geometry.stroke', stylers: [{color: '#202020'}]},
+    {featureType: 'administrative.land_parcel', elementType: 'geometry.stroke', stylers: [{color: '#d0d0d0'}]},
+    {featureType: 'administrative.land_parcel', elementType: 'labels.text.fill', stylers: [{color: '#505050'}]},
+    {featureType: 'landscape.natural', elementType: 'geometry', stylers: [{color: '#303030'}]},
+    {featureType: 'poi', elementType: 'geometry', stylers: [{visibility: "off"}]},
+    {featureType: 'road', elementType: 'geometry', stylers: [{color: '#909090'}]},
+    {featureType: 'road.arterial', elementType: 'geometry', stylers: [{color: '#A0A0A0'}]},
+    {featureType: 'road.highway', elementType: 'geometry', stylers: [{color: '#B0B0B0'}]},
+    {featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{color: '#101010'}]},
+    {featureType: 'road.highway.controlled_access', elementType: 'geometry', stylers: [{color: '#D0D0D0'}]},
+    {featureType: 'road.highway.controlled_access', elementType: 'geometry.stroke', stylers: [{color: '#909090'}]},
+    {featureType: 'road.local', elementType: 'labels.text.fill', stylers: [{color: '#505050'}]},
+    {featureType: 'transit.line', elementType: 'geometry', stylers: [{color: '#E0E0E0'}]},
+    {featureType: 'transit.line', elementType: 'labels.text.fill', stylers: [{color: '#505050'}]},
+    {featureType: 'transit.line', elementType: 'labels.text.stroke', stylers: [{color: '#f0f0f0'}]},
+    {featureType: 'transit.station', elementType: 'geometry', stylers: [{color: '#707070'}]},
+    {featureType: 'water', elementType: 'geometry.fill', stylers: [{color: '#5050a0'}]},
+    {featureType: 'water', elementType: 'labels.text.fill', stylers: [{color: '#000000'}]},
+    ];
+  var defaultLocation = new google.maps.LatLng(38.915, -77.035);  // Washington, DC
+  var defaultZoom = 12;
+  if (parameter('home') != null) {
+    home = parameter('home');
+    latlng = home.split(",");
+    var lat = parseFloat(latlng[0]);
+    var lng = parseFloat(latlng[1]);
+    defaultLocation = new google.maps.LatLng(lat, lng);
+    defaultZoom = 15;
+    }
+  map = new google.maps.Map(document.getElementById('map'), {
+    zoom: defaultZoom,
+    center: defaultLocation,
+    scrollwheel: false,
+    clickableIcons: false,
+    styles: styles
+    });
+  d3.csv(csv + ".csv",
+    function(error, rows) {
+      if (error) {
+        console.error('Error getting or parsing the data.');
+        throw error;
+      }
+      heatmap = new google.maps.visualization.HeatmapLayer({
+        radius: 20,
+        opacity: 0.8,
+        maxIntensity: 20,
+        map: map
+        });
+      points;
+      for (var i = 0; i < rows.length; i++) {
+        var point = new google.maps.LatLng(+rows[i].lat, +rows[i].lng);
+        if (!maxDatasetDate || rows[i].datetaken > maxDatasetDate) {maxDatasetDate = rows[i].datetaken;}
+        if (!minDatasetDate || rows[i].datetaken < minDatasetDate) {minDatasetDate = rows[i].datetaken;}
+        photos.push({
+          point: point,
+          url: rows[i].url,
+          src: rows[i].src,
+          datetaken: rows[i].datetaken
+          });
+        points.push(point);
+        }
+      minDisplayDate = minDatasetDate;
+      maxDisplayDate = maxDatasetDate;
+      setFromDate("0");
+      setToDate(MAX_DATE_VALUE + "");
+      setHeatmapData();
+      document.getElementById('fromRange').value = 0;
+      document.getElementById('toRange').value = MAX_DATE_VALUE;
+      }
+    );
+  google.maps.event.addListener(map, "bounds_changed", countPhotos);
+  }
+
+function countPhotos() {
+  // these dates are strings, but we can use < & > to compare since they are in format YYYY-MM-DD
+  var bounds = map.getBounds();
+  if (!bounds) {return;}
+  var ne = bounds.getNorthEast();
+  var sw = bounds.getSouthWest();
+  var count = 0;
+  var maxDate = null;
+  var minDate = null;
+  var allDates = minDisplayDate == null || maxDisplayDate == null || (minDisplayDate == minDatasetDate && maxDisplayDate == maxDatasetDate);
+  var inDateRange = 0;
+  for (var i = 0; i < photos.length; i++) {
+    var photo = photos[i];
+    if (allDates || photo.datetaken >= minDisplayDate && photo.datetaken <= maxDisplayDate) {
+      inDateRange++;
+      if (bounds.contains(photo.point)) {
+        count++;
+        if (!maxDate || photo.datetaken > maxDate) {
+          maxDate = photo.datetaken;
+          }
+        if (!minDate || photo.datetaken < minDate) {
+          minDate = photo.datetaken;
+          }
+        }
+      }
+    }
+  document.getElementById('pix').innerHTML = count + " (of " + inDateRange + ") photos in map<br>" + daterange(minDate, maxDate);
+  }
+
+function date_str_to_object(d) {
+  // d is always YYYY-MM-DD
+  if (!d) {
+    return {year: null, month: null, day: null};
+    }
+  return {year: d.substr(0, 4), month: months[parseInt(d.substr(5, 2)) - 1], day: parseInt(d.substr(8, 2))};
+  }
+
+function daterange(a, b) {
+  a = date_str_to_object(a);
+  b = date_str_to_object(b);
+  if (a.year == b.year) {
+    if (a.month == b.month) {
+      if (a.day == b.day) {
+        return a.month + " " + a.day + ", " + a.year;
+        }
+      return a.month + " " + a.day + " - " + b.day + ", " + a.year;
+      }
+    return a.month + " " + a.day + " - " + b.month + " " + b.day + ", " + a.year;
+    }
+  return a.month + " " + a.day + ", " + a.year + " - " + b.month + " " + b.day + ", " + b.year;
+  }
+
+function pad6(num) {
+  var s = "00000" + num;
+  return s.substr(-6);
+  }
+
+function getPoints() {
+  var points = [];
+  for (var i = 0; i < photos.length; i++) {
+    photo = photos[i];
+    points.push(new google.maps.LatLng(photo.lat, photo.lng));
+    }
+  return points;
+  }
+
+function fromPixelToLatLng(x, y) {
+  var projection = map.getProjection();
+  var topRight = projection.fromLatLngToPoint(map.getBounds().getNorthEast());
+  var bottomLeft = projection.fromLatLngToPoint(map.getBounds().getSouthWest());
+  var scale = 1 << map.getZoom();
+  return projection.fromPointToLatLng(new google.maps.Point(x/scale + bottomLeft.x, y/scale + topRight.y));
+  };
+
+function rad(x) {
+  return x*Math.PI/180;
+  };
+
+function getDistance(p1, p2) {
+  var R = 6378137; // Earth’s mean radius in meters
+  var dLat = rad(p2.lat() - p1.lat())/2;
+  var dLng = rad(p2.lng() - p1.lng())/2;
+  var a = Math.sin(dLat)*Math.sin(dLat) + Math.cos(rad(p1.lat()))*Math.cos(rad(p2.lat()))*Math.sin(dLng)*Math.sin(dLng);
+  var c = 2*Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  var d = R*c;
+  return d; // returns the distance in meter
+  };
+
+function handleClick(e) {
+  e = e || window.event;
+  var cursor = fromPixelToLatLng(e.pageX, e.pageY);
+  var lat = cursor.lat();
+  var lng = cursor.lng();
+  var minPixelDistance = getDistance(fromPixelToLatLng(0, 0), fromPixelToLatLng(32, 0))
+  var nearby = [];
+  var allDates = minDisplayDate == null || maxDisplayDate == null || (minDisplayDate == minDatasetDate && maxDisplayDate == maxDatasetDate);
+  for (var i = 0; i < photos.length; i++) {
+    var photo = photos[i];
+    photo.dist = getDistance(cursor, photo.point);
+    if (photo.dist < minPixelDistance && (allDates || photo.datetaken >= minDisplayDate && photo.datetaken <= maxDisplayDate)) {
+      nearby.push(photo);
+      }
+    }
+  if (nearby.length == 0) {
+    countPhotos();
+    return;
+    }
+  nearby.sort(function(a, b) {return a.dist - b.dist;})
+  photoContent = "";
+  thumbnailCount = Math.min(nearby.length, MAX_THUMBNAIL_COUNT);
+  for (var i = 0; i < nearby.length; i++) {
+    photoContent += '<a href="' + nearby[i].url + '"><img src="' + nearby[i].src + '"></a><br>';
+    }
+  document.getElementById('pix').innerHTML = photoContent;
+  }
+
+function changeRadius(value) {
+  heatmap.setOptions({radius: value})
+  }
+
+function changeIntensity(value) {
+  heatmap.setOptions({maxIntensity: value});
+  }
+
+function twoDigits(x) {
+  return ("0" + x).slice(-2)
+  }
+
+function getDateFromScale(value) {
+  var ratio = parseInt(value)/MAX_DATE_VALUE;  // 0 to 1
+  var minDateObj = new Date(minDatasetDate);
+  var maxDateObj = new Date(maxDatasetDate);
+  // getTime() adjusts for local time zone; use getTimezoneOffset() to negate offset
+  var minTime = minDateObj.getTime() + minDateObj.getTimezoneOffset()*60*MAX_DATE_VALUE;
+  var maxTime = maxDateObj.getTime() + maxDateObj.getTimezoneOffset()*60*MAX_DATE_VALUE;
+  return new Date(minTime + (maxTime - minTime)*ratio);
+  }
+
+function setFromDate(value) {
+  day = getDateFromScale(value);
+  minDisplayDate = day.getFullYear() + "-" + twoDigits(day.getMonth() + 1) + "-" + twoDigits(day.getDate());
+  document.getElementById('fromDate').value = day.getFullYear() + " " + months[day.getMonth()] + " " + day.getDate();
+  var toRange = document.getElementById('toRange');
+  if (parseInt(value) > toRange.valueAsNumber) {
+    toRange.value = value;
+    setToDate(value);
+    }
+  }
+
+function setToDate(value) {
+  day = getDateFromScale(value);
+  maxDisplayDate = day.getFullYear() + "-" + twoDigits(day.getMonth() + 1) + "-" + twoDigits(day.getDate());
+  document.getElementById('toDate').value = day.getFullYear() + " " + months[day.getMonth()] + " " + day.getDate();
+  var fromRange = document.getElementById('fromRange');
+  if (parseInt(value) < fromRange.valueAsNumber) {
+    fromRange.value = value;
+    setFromDate(value);
+    }
+  }
+
+function setActive(activeState) {
+  if (activeState != previousActiveState) {
+    document.getElementById('controls').style.backgroundColor = activeState ? "#AEFA58" : "#8EDA38";
+    previousActiveState = activeState;
+    }
+  }
+
+window.addEventListener("click", handleClick);
+</script>
+</head>
+<body>
+<div id="map"></div>
+<div id="controls"><form oninput="setActive(true)" onchange="setActive(false)">
+  Radius: <output id="radius"></output><br>
+  <input type="range" min="1" max="100" value="20" oninput="document.getElementById('radius').value=this.value" onchange="changeRadius(this.value)"><br>
+  Max intensity: <output id="max"></output><br>
+  <input type="range" min="1" max="1000" value="20" oninput="document.getElementById('max').value=this.value" onchange="changeIntensity(this.value)"><br>
+  From: <output id="fromDate"></output><br>
+  <input type="range" min="0" max="1000" id="fromRange" oninput="setFromDate(this.value)" onchange="setHeatmapData()"><br>
+  To: <output id="toDate"></output><br>
+  <input type="range" min="0" max="1000" id="toRange" oninput="setToDate(this.value)" onchange="setHeatmapData()">
+</div>
+<div id="pix">Loading data...</div>
+<script src="https://maps.googleapis.com/maps/api/js?callback=initialize&libraries=visualization&key=AIzaSyAC2Gly8X2mFKSRkUrwLKMWQvUYS54QhsA" async defer></script>
+</body>
+</html>
