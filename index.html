@@ -2,10 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<!-- Copyright © 2018-2020 Michael Schade, http://mvjantzen.com -->
 <title>Flickr Heatmap</title>
 <script src="https://d3js.org/d3.v4.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
 <base target="_blank">
-<!-- Copyright © 2018-2020 Michael Schade, http://mvjantzen.com -->
 <style>
 html, body {
   height: 100%;
@@ -96,38 +98,7 @@ function initialize() {
   if (!csv) {
     alert("Missing 'csv' parameter");
     return;
-  }
-
-  var mapTypeIds = [];
-  for (var type in google.maps.MapTypeId) {
-    mapTypeIds.push(google.maps.MapTypeId[type]);
-    }
-  mapTypeIds.push("OSM");
-
-  var styles = [
-    {elementType: 'geometry', stylers: [{color: '#505050'}]},
-    {elementType: 'labels.text.fill', stylers: [{color: '#FFFFFF'}]},
-    {elementType: 'labels.text.stroke', stylers: [{color: '#303030'}]},
-    {featureType: 'administrative', elementType: 'geometry.stroke', stylers: [{color: '#202020'}]},
-    {featureType: 'administrative.land_parcel', elementType: 'geometry.stroke', stylers: [{color: '#d0d0d0'}]},
-    {featureType: 'administrative.land_parcel', elementType: 'labels.text.fill', stylers: [{color: '#505050'}]},
-    {featureType: 'landscape.natural', elementType: 'geometry', stylers: [{color: '#303030'}]},
-    {featureType: 'poi', elementType: 'geometry', stylers: [{visibility: "off"}]},
-    {featureType: 'road', elementType: 'geometry', stylers: [{color: '#909090'}]},
-    {featureType: 'road.arterial', elementType: 'geometry', stylers: [{color: '#A0A0A0'}]},
-    {featureType: 'road.highway', elementType: 'geometry', stylers: [{color: '#B0B0B0'}]},
-    {featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{color: '#101010'}]},
-    {featureType: 'road.highway.controlled_access', elementType: 'geometry', stylers: [{color: '#D0D0D0'}]},
-    {featureType: 'road.highway.controlled_access', elementType: 'geometry.stroke', stylers: [{color: '#909090'}]},
-    {featureType: 'road.local', elementType: 'labels.text.fill', stylers: [{color: '#505050'}]},
-    {featureType: 'transit.line', elementType: 'geometry', stylers: [{color: '#E0E0E0'}]},
-    {featureType: 'transit.line', elementType: 'labels.text.fill', stylers: [{color: '#505050'}]},
-    {featureType: 'transit.line', elementType: 'labels.text.stroke', stylers: [{color: '#f0f0f0'}]},
-    {featureType: 'transit.station', elementType: 'geometry', stylers: [{color: '#707070'}]},
-    {featureType: 'water', elementType: 'geometry.fill', stylers: [{color: '#5050a0'}]},
-    {featureType: 'water', elementType: 'labels.text.fill', stylers: [{color: '#000000'}]},
-    ];
-  var defaultLocation = new google.maps.LatLng(38.915, -77.035);  // Washington, DC
+  }   var defaultLocation = new google.maps.LatLng(38.915, -77.035);  // Washington, DC
   var defaultZoom = 12;
   if (parameter('home') != null) {
     home = parameter('home');
@@ -136,23 +107,7 @@ function initialize() {
     var lng = parseFloat(latlng[1]);
     defaultLocation = new google.maps.LatLng(lat, lng);
     defaultZoom = 15;
-    }
-  map = new google.maps.Map(document.getElementById('map'), {
-    zoom: defaultZoom,
-    center: defaultLocation,
-    scrollwheel: false,
-    clickableIcons: false,
-    mapTypeControlOptions: {mapTypeIds: mapTypeIds},
-    styles: styles
-    });
-  map.mapTypes.set("OSM", new google.maps.ImageMapType({
-    getTileUrl: function(coord, zoom) {
-      return "http://tile.openstreetmap.org/" + zoom + "/" + coord.x + "/" + coord.y + ".png";
-      },
-    tileSize: new google.maps.Size(256, 256),
-    name: "OpenStreetMap",
-    maxZoom: 18
-    }));
+    } 
   d3.csv(csv + ".csv",
     function(error, rows) {
       if (error) {
@@ -361,7 +316,21 @@ window.addEventListener("click", handleClick);
 </script>
 </head>
 <body>
-<div id="map"></div>
+<div id="map" style="width: 600px; height: 400px;"></div>
+<script>
+var map = L.map('map').setView([51.505, -0.09], 13);
+var tiles = L.tileLayer(
+  'https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw',
+  {
+    maxZoom: 18,
+    attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, ' +
+	         'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+    id: 'mapbox/streets-v11',
+    tileSize: 512,
+    zoomOffset: -1
+   }
+  ).addTo(map);
+</script>
 <div id="controls"><form oninput="setActive(true)" onchange="setActive(false)">
   Radius: <output id="radius"></output><br>
   <input type="range" min="1" max="100" value="20" oninput="document.getElementById('radius').value=this.value" onchange="changeRadius(this.value)"><br>
@@ -373,6 +342,5 @@ window.addEventListener("click", handleClick);
   <input type="range" min="0" max="1000" id="toRange" oninput="setToDate(this.value)" onchange="setHeatmapData()">
 </div>
 <div id="pix">Loading data...</div>
-<script src="https://maps.googleapis.com/maps/api/js?callback=initialize&libraries=visualization&key=AIzaSyAC2Gly8X2mFKSRkUrwLKMWQvUYS54QhsA" async defer></script>
 </body>
 </html>
