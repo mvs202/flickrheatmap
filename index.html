@@ -130,7 +130,7 @@ function initialize() {
       zoomOffset: -1
      }
     ).addTo(map);
-  var heatmap = L.heatLayer([], {radius: 20, blur: 15, maxZoom: 17}).addTo(map);
+  heatmap = L.heatLayer([], {radius: 20, blur: 15, maxZoom: 17}).addTo(map);
   console.log(heatmap);
   map.on("moveend", countPhotos);
   map.on("click", handleClick);
