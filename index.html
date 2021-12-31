@@ -99,7 +99,7 @@ function initialize() {
     alert("Missing 'csv' parameter");
     return;
   }   
-  var defaultLocation = [-77.035, 38.915];  // Washington, DC
+  var defaultLocation = [38.915, -77.035];  // Washington, DC
   var defaultZoom = 12;
   var map = L.map('map').setView(defaultLocation, defaultZoom);
   var tiles = L.tileLayer(
