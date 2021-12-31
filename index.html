@@ -6,7 +6,12 @@
 <title>Flickr Heatmap</title>
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin=""/>
-<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
+<script 
+  src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" 
+  integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" 
+  crossorigin=""
+></script>
+<script src="http://leaflet.github.io/Leaflet.heat/dist/leaflet-heat.js"></script>
 <base target="_blank">
 <style>
 html, body {
@@ -101,6 +106,14 @@ function initialize() {
   }   
   var defaultLocation = [38.915, -77.035];  // Washington, DC
   var defaultZoom = 12;
+  if (parameter('home') != null) {
+    home = parameter('home');
+    latlng = home.split(",");
+    var lat = parseFloat(latlng[0]);
+    var lng = parseFloat(latlng[1]);
+    defaultLocation = [lat, lng];
+    defaultZoom = 15;
+    }
   var map = L.map('map').setView(defaultLocation, defaultZoom);
   var tiles = L.tileLayer(
     'https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw',
@@ -113,15 +126,7 @@ function initialize() {
       zoomOffset: -1
      }
     ).addTo(map);
-  return;
-  if (parameter('home') != null) {
-    home = parameter('home');
-    latlng = home.split(",");
-    var lat = parseFloat(latlng[0]);
-    var lng = parseFloat(latlng[1]);
-    defaultLocation = new google.maps.LatLng(lat, lng);
-    defaultZoom = 15;
-    } 
+  return; 
   d3.csv(csv + ".csv",
     function(error, rows) {
       if (error) {
@@ -136,7 +141,7 @@ function initialize() {
         });
       points;
       for (var i = 0; i < rows.length; i++) {
-        var point = new google.maps.LatLng(+rows[i].lat, +rows[i].lng);
+        var point = L.latLng(+rows[i].lat, +rows[i].lng);
         if (!maxDatasetDate || rows[i].datetaken > maxDatasetDate) {maxDatasetDate = rows[i].datetaken;}
         if (!minDatasetDate || rows[i].datetaken < minDatasetDate) {minDatasetDate = rows[i].datetaken;}
         photos.push({
@@ -156,15 +161,22 @@ function initialize() {
       document.getElementById('toRange').value = MAX_DATE_VALUE;
       }
     );
-  google.maps.event.addListener(map, "bounds_changed", countPhotos);
+var quakePoints = [
+[38.915, -77.035],
+[38.925, -77.037],
+[38.935, -77.039],
+[38.916, -77.034],
+[38.917, -77.032],
+[38.918, -77.030],
+];
+  var heat = L.heatLayer(quakePoints, {radius: 20, blur: 15, maxZoom: 17}).addTo(map);
+  map.on('moveend', countPhotos);
   }
 
 function countPhotos() {
   // these dates are strings, but we can use < & > to compare since they are in format YYYY-MM-DD
   var bounds = map.getBounds();
   if (!bounds) {return;}
-  var ne = bounds.getNorthEast();
-  var sw = bounds.getSouthWest();
   var count = 0;
   var maxDate = null;
   var minDate = null;
@@ -330,7 +342,7 @@ window.addEventListener("click", handleClick);
 </script>
 </head>
 <body onload="initialize()">
-<div id="map" style="width: 600px; height: 400px;"></div>
+<div id="map"></div>
 <div id="controls"><form oninput="setActive(true)" onchange="setActive(false)">
   Radius: <output id="radius"></output><br>
   <input type="range" min="1" max="100" value="20" oninput="document.getElementById('radius').value=this.value" onchange="changeRadius(this.value)"><br>
