@@ -133,12 +133,6 @@ function initialize() {
         console.error('Error getting or parsing the data.');
         throw error;
       }
-      heatmap = new google.maps.visualization.HeatmapLayer({
-        radius: 20,
-        opacity: 0.8,
-        maxIntensity: 20,
-        map: map
-        });
       points;
       for (var i = 0; i < rows.length; i++) {
         var point = L.latLng(+rows[i].lat, +rows[i].lng);
@@ -156,7 +150,7 @@ function initialize() {
       maxDisplayDate = maxDatasetDate;
       setFromDate("0");
       setToDate(MAX_DATE_VALUE + "");
-      setHeatmapData();
+      //setHeatmapData();
       document.getElementById('fromRange').value = 0;
       document.getElementById('toRange').value = MAX_DATE_VALUE;
       }
@@ -170,7 +164,8 @@ var quakePoints = [
 [38.918, -77.030],
 ];
   var heat = L.heatLayer(quakePoints, {radius: 20, blur: 15, maxZoom: 17}).addTo(map);
-  map.on('moveend', countPhotos);
+  map.on("moveend", countPhotos);
+  map.on("click", handleClick);
   }
 
 function countPhotos() {
@@ -260,7 +255,7 @@ function getDistance(p1, p2) {
   };
 
 function handleClick(e) {
-  e = e || window.event;
+  // leaflet uses: e = e.latlng
   var cursor = fromPixelToLatLng(e.pageX, e.pageY);
   var lat = cursor.lat();
   var lng = cursor.lng();
@@ -337,8 +332,6 @@ function setActive(activeState) {
     previousActiveState = activeState;
     }
   }
-
-window.addEventListener("click", handleClick);
 </script>
 </head>
 <body onload="initialize()">
