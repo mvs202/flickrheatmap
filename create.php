@@ -82,7 +82,6 @@ foreach ($outputPix as $row) {
 function addPixToArray() {
   global $f;
   global $outputPix;
-  global $imageSize;
   global $photos;
   global $user_name;
   $pix = (array)$photos['photo'];
@@ -93,7 +92,7 @@ function addPixToArray() {
       'lng' => $photo['longitude'],
       'ownername' => $photo['ownername'],
       'url' => "http://flickr.com/photos/$owner/$photo[id]",
-      'src' => $f->buildPhotoURL($photo, $imageSize));
+      'src' => $f->buildPhotoURL($photo, "small"));
     $node['datetaken'] = substr($photo['datetaken'], 0, 10);  // use only the date (truncate time)
     array_push($outputPix, $node);
     }
