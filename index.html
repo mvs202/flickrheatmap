@@ -183,7 +183,7 @@ function initialize() {
       zoomOffset: -1
      }
     ).addTo(map);
-  heatmap = L.heatLayer([], {radius: 25, max: 5, blur: 15, blur: 40}).addTo(map);
+  heatmap = L.heatLayer([], {radius: 25, max: 5, blur: 20, blur: 40}).addTo(map);
   map.on("moveend", countPhotos);
   map.on("click", displayNearbyPhotos);
   d3.csv(csv + ".csv",
@@ -269,10 +269,6 @@ function getDistance(p1, p2) {
   return d; // returns the distance in meter
   };
 
-function changeBlur(value) {
-  heatmap.setOptions({blur: value})
-  }
-
 function changeRadius(value) {
   heatmap.setOptions({radius: value})
   }
@@ -328,8 +324,6 @@ function setActive(activeState) {
 <body onload="initialize()">
 <div id="map"></div>
 <div id="controls"><form oninput="setActive(true)" onchange="setActive(false)">
-  Blur: <output id="blur"></output><br>
-  <input type="range" min="0" max="100" value="25" oninput="document.getElementById('blur').value=this.value" onchange="changeBlur(this.value)"><br>
   Radius: <output id="radius"></output><br>
   <input type="range" min="1" max="50" value="25" oninput="document.getElementById('radius').value=this.value" onchange="changeRadius(this.value)"><br>
   Max intensity: <output id="max"></output><br>
