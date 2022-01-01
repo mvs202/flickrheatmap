@@ -261,8 +261,6 @@ function rad(x) {
   };
 
 function getDistance(p1, p2) {
-  console.log(typeof p1);
-  console.log(p1);
   var R = 6378137; // Earth’s mean radius in meters
   var dLat = rad(p2.lat - p1.lat)/2;
   var dLng = rad(p2.lng - p1.lng)/2;
