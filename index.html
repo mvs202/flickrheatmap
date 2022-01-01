@@ -42,7 +42,7 @@ input {
   max-height: 100vh;
   overflow-x: hidden;
   overflow-y: auto;
-  z-index: 200;
+  z-index: 400;
   }
 #controls {
   font-size: 13px;
@@ -53,7 +53,7 @@ input {
   top: 0;
   right: 0;
   transition: background-color 1s ease;
-  z-index: 200;
+  z-index: 400;
   }
 </style>
 <script>
@@ -83,6 +83,59 @@ function parameter(name) {
       return "";
     }
   return null;
+  }
+
+function countPhotos() {
+  console.log("countPhotos");
+  // these dates are strings, but we can use < & > to compare since they are in format YYYY-MM-DD
+  var bounds = map.getBounds();
+  if (!bounds) {return;}
+  var count = 0;
+  var maxDate = null;
+  var minDate = null;
+  var allDates = minDisplayDate == null || maxDisplayDate == null || (minDisplayDate == minDatasetDate && maxDisplayDate == maxDatasetDate);
+  var inDateRange = 0;
+  for (var i = 0; i < photos.length; i++) {
+    var photo = photos[i];
+    if (allDates || photo.datetaken >= minDisplayDate && photo.datetaken <= maxDisplayDate) {
+      inDateRange++;
+      if (bounds.contains(photo.point)) {
+        count++;
+        if (!maxDate || photo.datetaken > maxDate) {
+          maxDate = photo.datetaken;
+          }
+        if (!minDate || photo.datetaken < minDate) {
+          minDate = photo.datetaken;
+          }
+        }
+      }
+    }
+  document.getElementById('pix').innerHTML = count + " (of " + inDateRange + ") photos in map<br>" + daterange(minDate, maxDate);
+  }
+
+function displayNearbyPhotos(event) {
+  var minPixelDistance = getDistance(map.layerPointToLatLng([0, 0]), map.layerPointToLatLng([32, 0]));
+  console.log("displayNearbyPhotos", minPixelDistance);
+  var nearby = [];
+  var allDates = minDisplayDate == null || maxDisplayDate == null || (minDisplayDate == minDatasetDate && maxDisplayDate == maxDatasetDate);
+  for (var i = 0; i < photos.length; i++) {
+    var photo = photos[i];
+    photo.dist = getDistance(event.latlng, photo.point);
+    if (photo.dist < minPixelDistance && (allDates || photo.datetaken >= minDisplayDate && photo.datetaken <= maxDisplayDate)) {
+      nearby.push(photo);
+      }
+    }
+  if (nearby.length == 0) {
+    countPhotos();
+    return;
+    }
+  nearby.sort(function(a, b) {return a.dist - b.dist;})
+  photoContent = "";
+  thumbnailCount = Math.min(nearby.length, MAX_THUMBNAIL_COUNT);
+  for (var i = 0; i < nearby.length; i++) {
+    photoContent += '<a href="' + nearby[i].url + '"><img src="' + nearby[i].src + '"></a><br>';
+    }
+  document.getElementById('pix').innerHTML = photoContent;
   }
 
 function setHeatmapData() {
@@ -118,13 +171,13 @@ function initialize() {
     defaultLocation = [lat, lng];
     defaultZoom = 15;
     }
-  var map = L.map('map').setView(defaultLocation, defaultZoom);
+  map = L.map('map').setView(defaultLocation, defaultZoom);
   var tiles = L.tileLayer(
     'https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw',
     {
       maxZoom: 18,
       attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, ' +
-  	         'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+  	           'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
       id: 'mapbox/streets-v11',
       tileSize: 512,
       zoomOffset: -1
@@ -133,7 +186,7 @@ function initialize() {
   heatmap = L.heatLayer([], {radius: 20, blur: 15, maxZoom: 17}).addTo(map);
   console.log(heatmap);
   map.on("moveend", countPhotos);
-  map.on("click", handleClick);
+  map.on("click", displayNearbyPhotos);
   d3.csv(csv + ".csv",
     function(error, rows) {
       if (error) {
@@ -164,33 +217,6 @@ function initialize() {
       document.getElementById('toRange').value = MAX_DATE_VALUE;
       }
     );
-  }
-
-function countPhotos() {
-  // these dates are strings, but we can use < & > to compare since they are in format YYYY-MM-DD
-  var bounds = map.getBounds();
-  if (!bounds) {return;}
-  var count = 0;
-  var maxDate = null;
-  var minDate = null;
-  var allDates = minDisplayDate == null || maxDisplayDate == null || (minDisplayDate == minDatasetDate && maxDisplayDate == maxDatasetDate);
-  var inDateRange = 0;
-  for (var i = 0; i < photos.length; i++) {
-    var photo = photos[i];
-    if (allDates || photo.datetaken >= minDisplayDate && photo.datetaken <= maxDisplayDate) {
-      inDateRange++;
-      if (bounds.contains(photo.point)) {
-        count++;
-        if (!maxDate || photo.datetaken > maxDate) {
-          maxDate = photo.datetaken;
-          }
-        if (!minDate || photo.datetaken < minDate) {
-          minDate = photo.datetaken;
-          }
-        }
-      }
-    }
-  document.getElementById('pix').innerHTML = count + " (of " + inDateRange + ") photos in map<br>" + daterange(minDate, maxDate);
   }
 
 function date_str_to_object(d) {
@@ -230,55 +256,21 @@ function getPoints() {
   return points;
   }
 
-function fromPixelToLatLng(x, y) {
-  var projection = map.getProjection();
-  var topRight = projection.fromLatLngToPoint(map.getBounds().getNorthEast());
-  var bottomLeft = projection.fromLatLngToPoint(map.getBounds().getSouthWest());
-  var scale = 1 << map.getZoom();
-  return projection.fromPointToLatLng(new google.maps.Point(x/scale + bottomLeft.x, y/scale + topRight.y));
-  };
-
 function rad(x) {
   return x*Math.PI/180;
   };
 
 function getDistance(p1, p2) {
+  console.log(typeof p1);
+  console.log(p1);
   var R = 6378137; // Earth’s mean radius in meters
-  var dLat = rad(p2.lat() - p1.lat())/2;
-  var dLng = rad(p2.lng() - p1.lng())/2;
-  var a = Math.sin(dLat)*Math.sin(dLat) + Math.cos(rad(p1.lat()))*Math.cos(rad(p2.lat()))*Math.sin(dLng)*Math.sin(dLng);
+  var dLat = rad(p2.lat - p1.lat)/2;
+  var dLng = rad(p2.lng - p1.lng)/2;
+  var a = Math.sin(dLat)*Math.sin(dLat) + Math.cos(rad(p1.lat))*Math.cos(rad(p2.lat))*Math.sin(dLng)*Math.sin(dLng);
   var c = 2*Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   var d = R*c;
   return d; // returns the distance in meter
   };
-
-function handleClick(e) {
-  // leaflet uses: e = e.latlng
-  var cursor = fromPixelToLatLng(e.pageX, e.pageY);
-  var lat = cursor.lat();
-  var lng = cursor.lng();
-  var minPixelDistance = getDistance(fromPixelToLatLng(0, 0), fromPixelToLatLng(32, 0))
-  var nearby = [];
-  var allDates = minDisplayDate == null || maxDisplayDate == null || (minDisplayDate == minDatasetDate && maxDisplayDate == maxDatasetDate);
-  for (var i = 0; i < photos.length; i++) {
-    var photo = photos[i];
-    photo.dist = getDistance(cursor, photo.point);
-    if (photo.dist < minPixelDistance && (allDates || photo.datetaken >= minDisplayDate && photo.datetaken <= maxDisplayDate)) {
-      nearby.push(photo);
-      }
-    }
-  if (nearby.length == 0) {
-    countPhotos();
-    return;
-    }
-  nearby.sort(function(a, b) {return a.dist - b.dist;})
-  photoContent = "";
-  thumbnailCount = Math.min(nearby.length, MAX_THUMBNAIL_COUNT);
-  for (var i = 0; i < nearby.length; i++) {
-    photoContent += '<a href="' + nearby[i].url + '"><img src="' + nearby[i].src + '"></a><br>';
-    }
-  document.getElementById('pix').innerHTML = photoContent;
-  }
 
 function changeRadius(value) {
   heatmap.setOptions({radius: value})
