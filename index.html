@@ -116,7 +116,6 @@ function countPhotos() {
 
 function displayNearbyPhotos(event) {
   var minPixelDistance = getDistance(map.layerPointToLatLng([0, 0]), map.layerPointToLatLng([32, 0]));
-  console.log("displayNearbyPhotos", minPixelDistance);
   var nearby = [];
   var allDates = minDisplayDate == null || maxDisplayDate == null || (minDisplayDate == minDatasetDate && maxDisplayDate == maxDatasetDate);
   for (var i = 0; i < photos.length; i++) {
@@ -175,8 +174,7 @@ function initialize() {
   map = L.map('map').setView(defaultLocation, defaultZoom); 
   var layer = new L.StamenTileLayer("toner"); 
   map.addLayer(layer);
-
-  heatmap = L.heatLayer([], {radius: 25, max: 5, blur: 20, blur: 40}).addTo(map);
+  heatmap = L.heatLayer([], {radius: 25, max: 5, blur: 20, minOpacity: 0.5}).addTo(map);
   map.on("moveend", countPhotos);
   map.on("click", displayNearbyPhotos);
   d3.csv(csv + ".csv",
