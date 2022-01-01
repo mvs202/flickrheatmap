@@ -171,9 +171,9 @@ function initialize() {
     defaultZoom = 15;
     }
   map = L.map('map').setView(defaultLocation, defaultZoom); 
-  var layer = new L.StamenTileLayer("toner"); 
+  var layer = new L.StamenTileLayer("toner-lite"); 
   map.addLayer(layer);
-  heatmap = L.heatLayer([], {radius: 25, max: 5, blur: 20, minOpacity: 0.5}).addTo(map);
+  heatmap = L.heatLayer([], {radius: 25, max: 5, blur: 20, minOpacity: 0.6}).addTo(map);
   map.on("moveend", countPhotos);
   map.on("click", displayNearbyPhotos);
   d3.csv(csv + ".csv",
