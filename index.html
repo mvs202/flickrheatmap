@@ -11,6 +11,7 @@
   integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" 
   crossorigin=""
 ></script>
+<script src="https://stamen-maps.a.ssl.fastly.net/js/tile.stamen.js?v1.3.0"></script>
 <script src="https://leaflet.github.io/Leaflet.heat/dist/leaflet-heat.js"></script>
 
 <base target="_blank">
@@ -171,9 +172,10 @@ function initialize() {
     defaultLocation = [lat, lng];
     defaultZoom = 15;
     }
-
-
   map = L.map('map').setView(defaultLocation, defaultZoom); 
+  var layer = new L.StamenTileLayer("toner"); 
+  map.addLayer(layer);
+
   heatmap = L.heatLayer([], {radius: 25, max: 5, blur: 20, blur: 40}).addTo(map);
   map.on("moveend", countPhotos);
   map.on("click", displayNearbyPhotos);
