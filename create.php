@@ -21,6 +21,11 @@ $end = $argv[3];
 $user = $argv[4];
 $user_name = $argv[5];
 $f = new phpFlickr($key);
+echo "key: " . $key, PHP_EOL;
+echo "start: " . $start, PHP_EOL;
+echo "end: " . $end, PHP_EOL;
+echo "user: " . $user, PHP_EOL;
+echo "user_name: " . $user_name, PHP_EOL;
 if (isset($user)) { // either user ID, user alias, group ID, or group alias
   if (strpos($user, "@") > 0) { // either user ID or group ID
     $userinfo = $f->people_getInfo($user);
@@ -52,6 +57,7 @@ $criteria["per_page"] = 500;
 $criteria["sort"] = "date-taken-desc";
 $criteria["min_taken_date"] = $start;
 $criteria["max_taken_date"] = $end . " 23:59:59";  // make end date inclusive
+//$criteria["text"] = "Baltimore"; 
 set_time_limit(0); 
 echo "lat,lng,url,src,datetaken\r\n";
 $photos = null;
