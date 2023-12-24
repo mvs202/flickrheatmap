@@ -183,7 +183,11 @@ function initialize() {
         throw error;
       }
       points = [];
+      console.log(rows.length + " rows");
       for (var i = 0; i < rows.length; i++) {
+        if (i % 1000 == 0) {
+          console.log(i);
+        }
         var coords = [+rows[i].lat, +rows[i].lng];
         var point = L.latLng(+rows[i].lat, +rows[i].lng);
         if (!maxDatasetDate || rows[i].datetaken > maxDatasetDate) {maxDatasetDate = rows[i].datetaken;}
