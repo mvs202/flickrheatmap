@@ -326,9 +326,9 @@ function setActive(activeState) {
 <div id="map"></div>
 <div id="controls"><form oninput="setActive(true)" onchange="setActive(false)">
   Radius: <output id="radius"></output><br>
-  <input type="range" min="1" max="50" value="25" oninput="document.getElementById("radius").value=this.value" onchange="changeRadius(this.value)"><br>
+  <input type="range" min="1" max="50" value="25" oninput="document.getElementById('radius').value=this.value" onchange="changeRadius(this.value)"><br>
   Max intensity: <output id="max"></output><br>
-  <input type="range" min="1" max="200" value="5" oninput="document.getElementById("max").value=this.value" onchange="changeIntensity(this.value)"><br>
+  <input type="range" min="1" max="200" value="5" oninput="document.getElementById('max').value=this.value" onchange="changeIntensity(this.value)"><br>
   From: <output id="fromDate"></output><br>
   <input type="range" min="0" max="1000" id="fromRange" oninput="setFromDate(this.value)" onchange="setHeatmapData()"><br>
   To: <output id="toDate"></output><br>
