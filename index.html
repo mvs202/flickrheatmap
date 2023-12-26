@@ -67,12 +67,12 @@ var minDatasetDate = null;
 var maxDatasetDate = null;
 var minDisplayDate = null;
 var maxDisplayDate = null;
-var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+var months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 var previousActiveState = false;
 
 function parameter(name) {
   queryStr = window.location.href.substring(window.location.href.indexOf("?") + 1).split("&");
-  for (var i = 0; i < queryStr.length; i++) {
+  for (let i = 0; i < queryStr.length; i++) {
     eqPos = queryStr[i].indexOf("=");
     if (eqPos >= 0) {
       if (queryStr[i].substring(0, eqPos) == name)
@@ -168,7 +168,6 @@ function initialize() {
     defaultLocation = [lat, lng];
     defaultZoom = 15;
     }
-    {
   const mapOptions = { 
     center: defaultLocation,
     zoom: defaultZoom,
