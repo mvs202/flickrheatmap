@@ -5,7 +5,7 @@
 <!-- Copyright © 2018-2023 Michael Schade, http://mvjantzen.com -->
 <title>Flickr Heatmap</title>
 <script src="https://d3js.org/d3.v4.min.js"></script>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin=""/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin="">
 <script 
   src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" 
   integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" 
@@ -324,15 +324,17 @@ function setActive(activeState) {
 </head>
 <body onload="initialize()">
 <div id="map"></div>
-<div id="controls"><form oninput="setActive(true)" onchange="setActive(false)">
-  Radius: <output id="radius"></output><br>
-  <input type="range" min="1" max="50" value="25" oninput="document.getElementById('radius').value=this.value" onchange="changeRadius(this.value)"><br>
-  Max intensity: <output id="max"></output><br>
-  <input type="range" min="1" max="200" value="5" oninput="document.getElementById('max').value=this.value" onchange="changeIntensity(this.value)"><br>
-  From: <output id="fromDate"></output><br>
-  <input type="range" min="0" max="1000" id="fromRange" oninput="setFromDate(this.value)" onchange="setHeatmapData()"><br>
-  To: <output id="toDate"></output><br>
-  <input type="range" min="0" max="1000" id="toRange" oninput="setToDate(this.value)" onchange="setHeatmapData()">
+<div id="controls">
+  <form oninput="setActive(true)" onchange="setActive(false)">
+    Radius: <output id="radius"></output><br>
+    <input type="range" min="1" max="50" value="25" oninput="document.getElementById('radius').value=this.value" onchange="changeRadius(this.value)"><br>
+    Max intensity: <output id="max"></output><br>
+    <input type="range" min="1" max="200" value="5" oninput="document.getElementById('max').value=this.value" onchange="changeIntensity(this.value)"><br>
+    From: <output id="fromDate"></output><br>
+    <input type="range" min="0" max="1000" id="fromRange" oninput="setFromDate(this.value)" onchange="setHeatmapData()"><br>
+    To: <output id="toDate"></output><br>
+    <input type="range" min="0" max="1000" id="toRange" oninput="setToDate(this.value)" onchange="setHeatmapData()">
+  </form>
 </div>
 <div id="pix">Loading data...</div>
 </body>
