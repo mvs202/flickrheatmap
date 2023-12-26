@@ -71,9 +71,9 @@ var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov",
 var previousActiveState = false;
 
 function parameter(name) {
-  queryStr = window.location.href.substring(window.location.href.indexOf('?') + 1).split("&");
+  queryStr = window.location.href.substring(window.location.href.indexOf("?") + 1).split("&");
   for (var i = 0; i < queryStr.length; i++) {
-    eqPos = queryStr[i].indexOf('=');
+    eqPos = queryStr[i].indexOf("=");
     if (eqPos >= 0) {
       if (queryStr[i].substring(0, eqPos) == name)
         return queryStr[i].substring(eqPos + 1);
@@ -109,7 +109,7 @@ function countPhotos() {
         }
       }
     }
-  document.getElementById('pix').innerHTML = count + " (of " + inDateRange + ") photos in map<br>" + daterange(minDate, maxDate);
+  document.getElementById("pix").innerHTML = count + " (of " + inDateRange + ") photos in map<br>" + daterange(minDate, maxDate);
   }
 
 function displayNearbyPhotos(event) {
@@ -133,7 +133,7 @@ function displayNearbyPhotos(event) {
   for (var i = 0; i < nearby.length; i++) {
     photoContent += '<a href="' + nearby[i].url + '"><img src="' + nearby[i].src + '"></a><br>';
     }
-  document.getElementById('pix').innerHTML = photoContent;
+  document.getElementById("pix").innerHTML = photoContent;
   }
 
 function setHeatmapData() {
@@ -160,19 +160,25 @@ function initialize() {
   }   
   var defaultLocation = [38.915, -77.035];  // Washington, DC
   var defaultZoom = 12;
-  if (parameter('home') != null) {
-    home = parameter('home');
+  if (parameter("home") != null) {
+    home = parameter("home");
     latlng = home.split(",");
     var lat = parseFloat(latlng[0]);
     var lng = parseFloat(latlng[1]);
     defaultLocation = [lat, lng];
     defaultZoom = 15;
     }
-  map = L.map('map').setView(defaultLocation, defaultZoom); 
+    {
+  const mapOptions = { 
+    center: defaultLocation,
+    zoom: defaultZoom,
+    scrollWheelZoom: false
+  }; 
+  map = L.map("map", mapOptions); 
   const urlTemplate = "http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
   L.tileLayer(urlTemplate, {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    subdomains: ['a','b','c']
+    subdomains: ["a", "b", "c"]
   }).addTo( map );
   heatmap = L.heatLayer([], {radius: 25, max: 5, blur: 20, minOpacity: 0.6}).addTo(map);
   map.on("moveend", countPhotos);
@@ -180,7 +186,7 @@ function initialize() {
   d3.csv(csv + ".csv",
     function(error, rows) {
       if (error) {
-        console.error('Error getting or parsing the data.');
+        console.error("Error getting or parsing the data."");
         throw error;
       }
       points = [];
@@ -207,8 +213,8 @@ function initialize() {
       setFromDate("0");
       setToDate(MAX_DATE_VALUE + "");
       setHeatmapData();
-      document.getElementById('fromRange').value = 0;
-      document.getElementById('toRange').value = MAX_DATE_VALUE;
+      document.getElementById("fromRange").value = 0;
+      document.getElementById("toRange").value = MAX_DATE_VALUE;
       }
     );
   }
@@ -289,8 +295,8 @@ function getDateFromScale(value) {
 function setFromDate(value) {
   day = getDateFromScale(value);
   minDisplayDate = day.getFullYear() + "-" + twoDigits(day.getMonth() + 1) + "-" + twoDigits(day.getDate());
-  document.getElementById('fromDate').value = day.getFullYear() + " " + months[day.getMonth()] + " " + day.getDate();
-  var toRange = document.getElementById('toRange');
+  document.getElementById("fromDate").value = day.getFullYear() + " " + months[day.getMonth()] + " " + day.getDate();
+  var toRange = document.getElementById("toRange");
   if (parseInt(value) > toRange.valueAsNumber) {
     toRange.value = value;
     setToDate(value);
@@ -300,8 +306,8 @@ function setFromDate(value) {
 function setToDate(value) {
   day = getDateFromScale(value);
   maxDisplayDate = day.getFullYear() + "-" + twoDigits(day.getMonth() + 1) + "-" + twoDigits(day.getDate());
-  document.getElementById('toDate').value = day.getFullYear() + " " + months[day.getMonth()] + " " + day.getDate();
-  var fromRange = document.getElementById('fromRange');
+  document.getElementById("toDate").value = day.getFullYear() + " " + months[day.getMonth()] + " " + day.getDate();
+  var fromRange = document.getElementById("fromRange");
   if (parseInt(value) < fromRange.valueAsNumber) {
     fromRange.value = value;
     setFromDate(value);
@@ -310,7 +316,7 @@ function setToDate(value) {
 
 function setActive(activeState) {
   if (activeState != previousActiveState) {
-    document.getElementById('controls').style.backgroundColor = activeState ? "#AEFA58" : "#8EDA38";
+    document.getElementById("controls").style.backgroundColor = activeState ? "#AEFA58" : "#8EDA38";
     previousActiveState = activeState;
     }
   }
@@ -320,9 +326,9 @@ function setActive(activeState) {
 <div id="map"></div>
 <div id="controls"><form oninput="setActive(true)" onchange="setActive(false)">
   Radius: <output id="radius"></output><br>
-  <input type="range" min="1" max="50" value="25" oninput="document.getElementById('radius').value=this.value" onchange="changeRadius(this.value)"><br>
+  <input type="range" min="1" max="50" value="25" oninput="document.getElementById("radius").value=this.value" onchange="changeRadius(this.value)"><br>
   Max intensity: <output id="max"></output><br>
-  <input type="range" min="1" max="200" value="5" oninput="document.getElementById('max').value=this.value" onchange="changeIntensity(this.value)"><br>
+  <input type="range" min="1" max="200" value="5" oninput="document.getElementById("max").value=this.value" onchange="changeIntensity(this.value)"><br>
   From: <output id="fromDate"></output><br>
   <input type="range" min="0" max="1000" id="fromRange" oninput="setFromDate(this.value)" onchange="setHeatmapData()"><br>
   To: <output id="toDate"></output><br>
