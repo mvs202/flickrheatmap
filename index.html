@@ -27,8 +27,8 @@ img {
 input {
   width: 200px;
   }
-.leaflet-tile-pane img {
-  filter: saturate(50%);
+.leaflet-tile-pane {
+  filter: grayscale(75%);
 }
 #map {
   height: 100%;
@@ -88,7 +88,6 @@ function parameter(name) {
   }
 
 function countPhotos() {
-  console.log("countPhotos");
   // these dates are strings, but we can use < & > to compare since they are in format YYYY-MM-DD
   var bounds = map.getBounds();
   if (!bounds) {return;}
@@ -192,11 +191,7 @@ function initialize() {
         throw error;
       }
       points = [];
-      console.log(rows.length + " rows");
       for (var i = 0; i < rows.length; i++) {
-        if (i % 1000 == 0) {
-          console.log(i);
-        }
         var coords = [+rows[i].lat, +rows[i].lng];
         var point = L.latLng(+rows[i].lat, +rows[i].lng);
         if (!maxDatasetDate || rows[i].datetaken > maxDatasetDate) {maxDatasetDate = rows[i].datetaken;}
