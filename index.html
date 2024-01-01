@@ -170,6 +170,10 @@ function initialize() {
     defaultLocation = [lat, lng];
     defaultZoom = 15;
     }
+  if (parameter("zoom") != null) {
+    zoom = parameter("zoom"); 
+    defaultZoom = parseFloat(zoom);
+    }
   const mapOptions = { 
     center: defaultLocation,
     zoom: defaultZoom,
